@@ -1,0 +1,62 @@
+{% extends "admin/change_list.html" %}
+
+{% block content_title %}
+    <h1> Purchase Summary </h1>
+{% endblock %}
+
+{% load humanize %}
+{% block result_list %}
+    <div class="results">
+    <table>
+        
+    <thead>
+      <tr>
+        <th>
+          <div class="text">
+            <a href=”#”>Item</a>
+          </div>
+        </th>
+        <th>
+          <div class="text">
+            <a href=#>Total Quantity</a>
+          </div>
+        </th>
+        <th>
+          <div class="text">
+            <a href="#">Total Amount</a>
+          </div>
+        </th>
+        
+        <th>
+          <div class="text">
+            <a href="#">Total Tax</a>
+          </div>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+    	
+      {% for row in summary %}
+      <tr class="{% cycle 'row1' 'row2' 'row3' %}">
+        <td> {{ row.product__name }} </td>
+        <td> {{ row.total | intcomma }} </td>
+        <td> {{ row.total_sales | default:0 | intcomma }} </td>
+        <td> {{ row.total_tax | default:0 | intcomma }} </td>
+        
+      </tr>
+      {% endfor %}
+    </tbody>
+    
+    <tr style="font-weight:bold; border-top:2px solid #DDDDDD;"">
+            <td> Total </td>
+            <td> {{ summary_total.total | intcomma }} </td>
+            <td> {{ summary_total.total_sales | default:0 }} </td>
+            <td> {{ summary_total.total_tax | default:0 }} </td>
+            
+        </tr>
+  </table>
+</div>
+{% endblock %}
+
+{% block pagination %}{% endblock %}

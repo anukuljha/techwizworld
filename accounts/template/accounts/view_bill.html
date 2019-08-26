@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<style>
+
+	body { height:297mm; width:210mm; margin-left:auto; margin-right:auto; }
+		td.container > div {
+    width: 100%;
+    height: 100%;
+    overflow:hidden;
+    padding: 0;
+}
+h5{
+    margin:0;
+    padding:0;
+}
+h4,h2{
+    margin:0;
+    padding:0;
+}
+
+h1{
+    margin:0;
+   
+    border: solid;
+  border-width: 1px 0;
+}
+td.container {
+    height: 110px;
+}
+p.no_margin{
+	margin:0;
+    padding:0;
+}
+td.container2 {
+    height: 160px;
+}
+		table, tr, td {
+			border: 1px solid black;
+			border-collapse: collapse;
+			padding-right: 5px;
+		}
+
+		td {
+			padding-top: 0;
+			text-align: center;
+			padding-left: 5px;
+		}
+
+		.headers {
+			text-align: center;
+			font-weight: bold;
+			padding: 2px;
+		}
+
+		.values {
+			 text-align: right;
+		}
+	</style>
+</head>
+
+<body>
+	<section style="width: 100%;margin-top: 20px">
+	    <center>
+	    	<table style="width:95%;">
+	   <tbody>
+    <tr>
+        <td rowspan="6" style="width: 65%" >
+        	<div>
+						<h1> Invoice <h1>
+						<h2>M/s Jyoti Enterprises</h2>
+						<p class="no_margin">Yashoda Nagar,Chhota Govindpur <br>
+							Jamshedpur, Jharkhand 831004<br>
+						GSTIN : <b> 20AAHFJ8998B1Z9 </b> <br>
+						State Code: 20 <br>
+						Mobile: +919798324066 
+						</p>	
+					</div>
+        </td>
+        <td colspan="2" style="padding: 0; border-bottom: solid 1px transparent;"></td>
+    </tr>
+    <tr>
+        <td> Invoice No </td>
+        <td> {{ bill.invoice_number }}</td>
+        <td> Invoice Date </td>
+        <td> {{ bill.invoice_date|date:"d-m-Y" }}</td>
+    </tr>
+    {% if bill.po_number > 0 %}
+    <tr>
+        <td> PO No </td>
+        <td> {{ bill.po_number }} </td>
+        <td> PO Date </td>
+        <td> {{ bill.po_date|date:"d-m-Y" }} </td>
+    </tr>
+    {% endif %}
+    </tbody>
+		</table>
+		<table style="width:95%;height:100px;">
+			<tr >
+				<td class="container">
+					<div>
+					<h4>Billing Address</h4>
+					<h5>{{bill.site.client.name}}</h5>
+					<p class="no_margin">
+						{{bill.site.client.billing_address_line1}}<br>
+						{{bill.site.client.billing_address_line2}}<br>
+						{{bill.site.client.billing_address_line3}}<br>
+						GSTIN:<b> {{bill.site.client.GSTIN}} </b>
+					</p>
+				<div>
+				</td>
+				
+				<td  class="container">
+					<div>
+					<h4>Shipping Address</h4>
+					<h5>{{bill.site.name}}</h5>
+					<p class="no_margin">{{bill.site.client.name}}</p>
+					<p class="no_margin">
+						{{bill.site.shipping_address_line1}}<br>
+						{{bill.site.shipping_address_line2}}<br>
+						{{bill.site.shipping_address_line3}}<br>
+						
+					</p>
+				</div>
+				</td>
+			</tr>
+
+		</table>
+		<table width="95%">
+			<tr>
+				<td class="headers">S.no.</td>
+				
+				
+				<td class="headers" colspan="2">Item Name</td>
+				
+				<td class="headers">HSN</td>
+				
+				<td class="headers">Unit</td>
+				<td class="headers">Qty.</td>
+				<td class="headers">Rate</td>
+				<td class="headers">Amount</td>
+				{% if bill.collection == "1" %}
+				<td class="headers">SGST @</td>
+				<td class="headers">SGST value</td>
+				<td class="headers">CGST @</td>
+				<td class="headers">CGST Value</td>
+				{% elif bill.collection == "2" %}
+				<td class="headers" colspan="2">IGST @</td>
+				<td class="headers" colspan="2">IGST Value</td>
+				{% endif %}
+				
+			</tr>
+			{% load math %}
+			{% for p in bill.billedproducts_set.all %}
+			<tr>
+				<td>{{ forloop.counter }}</td>
+				
+				<td colspan="2">{{ p.name }}</td>
+				
+				<td>{{ p.hsn }}</td>
+				
+				<td>{{ p.unit }}</td>
+				<td>{{ p.quantity|floatformat:3 }}</td>
+				<td>{{ p.price|floatformat:2 }}</td>
+				<td>{{ p.total|floatformat:2 }}</td>
+				{% if bill.collection == "1" %}
+				<td>{{ p.category|div:2 |floatformat:2}}%</td>
+				<td>{{ p.taxTotal|div:2|floatformat:2 }}</td>
+				<td>{{ p.category|div:2|floatformat:2 }}%</td>
+				<td>{{ p.taxTotal|div:2|floatformat:2 }}</td>
+				{% elif bill.collection == "2" %}
+				<td colspan="2">{{ p.category }}%</td>
+				<td colspan="2">{{ p.taxTotal|floatformat:2 }}</td>
+				{% endif %}
+				
+			</tr>
+			{% endfor %}
+		</table>
+		<br>
+		<table style="width: 95%">	
+			<tr>
+				<td class="headers">CLASS</td>
+				<td style="text-align: right;font-weight: bold">Taxable Value</td>
+				{% if bill.collection == "1" %}
+				<td style="text-align: right;font-weight: bold">SGST</td>
+				<td style="text-align: right;font-weight: bold">CGST</td>
+				{% elif bill.collection == "2" %}
+				<td style="text-align: right;font-weight: bold" colspan="2">IGST</td>
+				{% endif %}
+				<td style="text-align: right;font-weight: bold">TOTAL GST</td>
+				<td ></td>
+				<td style="font-weight: bold">
+                    TOTAL <span style="float: right;">{{ bill.total|floatformat:2 }}</span>
+                </td>
+			</tr>
+			<tr>
+				<td>
+					<span>GST 0%</span><br>
+					<span>GST 5%</span><br>
+					<span>GST 12%</span><br>
+					<span>GST 18%</span><br>
+					
+				</td>
+				<td class="values">
+					
+					{% for price in bill.price_tax_dict %}
+					<span>{{ price|floatformat:2 }}</span><br>
+					{% endfor %}
+				</td>
+				{% if bill.collection == "1" %}
+				<td class="values">
+					{% for tax in bill.tax_dict %}
+					<span>{{ tax|div:2|floatformat:2 }}</span><br>
+					{% endfor %}
+				</td>
+				<td class="values">
+					{% for tax in bill.tax_dict %}
+					<span>{{ tax|div:2|floatformat:2 }}</span><br>
+					{% endfor %}
+				</td>
+				{% elif bill.collection == "2" %}
+				<td class="values" colspan="2">
+					{% for tax in bill.tax_dict %}
+					<span>{{ tax|floatformat:2 }}</span><br>
+					{% endfor %}
+				</td>
+				{% endif %}
+				<td  class="values">
+					{% for tax in bill.tax_dict %}
+					<span>{{ tax|floatformat:2 }}</span><br>
+					{% endfor %}
+				</td>
+				<td>
+					
+				</td>
+				<td>
+					<br>
+					{% if bill.collection == "1" %}
+					<span>SGST Amount</span>
+                    <span style="float: right;">{{ bill.tax|div:2|floatformat:2 }}</span>
+                    <br><br>
+					<span>CGST Amount</span>
+                    <span style="float: right;">{{ bill.tax|div:2|floatformat:2 }}</span>
+					{% elif bill.collection == "2" %}
+					<span>IGST Amount</span>
+                    <span style="float: right;">{{ bill.tax|floatformat:2 }}</span>
+					{% endif %}
+				</td>
+			</tr>
+
+			<tr>
+				<td colspan="6">
+					<span style="font-size: 12px"><br></span>
+				</td>
+				<td rowspan="2">
+					
+						<p>
+						<h4>GRAND TOTAL</h4>
+						<h3 style="text-align: right">INR {{ bill.grandTotal|floatformat:2 }}</h3>
+					</p>
+				</td>
+			</tr>
+
+			<tr>
+				
+				<td colspan="6">
+					<b>FOR M/s Jyoti Enterprises</b>
+					<br><br>
+					<span style="text-align: right;"><b>Authorized signatory</b></span>
+				</td>
+			</tr>
+		</table>
+	    </center>
+		
+	</section>
+</body>
+</html>

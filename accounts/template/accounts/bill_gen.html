@@ -1,0 +1,280 @@
+{% extends 'accounts/base.html' %}
+
+{% block content %}
+
+<body>
+
+	<script type="text/javascript">
+
+		{% autoescape off %}
+		var data = {{ data }}
+		{% endautoescape %}
+
+		function getAutocomplete(){
+			temp = {}
+			data.forEach(function(item){
+				temp[item.name] = null
+			});
+			return temp
+		}
+
+		var selected = [];
+		var temp = {};
+
+		function sendData(){
+			var invoice_date = new Date(document.getElementsByName('{{ form.invoice_date.name }}')[0].value);
+			var po_date = new Date(document.getElementsByName('{{ form.po_date.name }}')[0].value);
+			var params = {
+				'csrfmiddlewaretoken' : '{{ csrf_token }}',
+				'invoice_date' : (invoice_date.getMonth()+1)+"/"+invoice_date.getDate()+"/"+invoice_date.getFullYear(),
+				'po_date' : (po_date.getMonth()+1)+"/"+po_date.getDate()+"/"+po_date.getFullYear(),
+				'invoice_number' :  document.getElementsByName('{{ form.invoice_number.name }}')[0].value,
+				'po_number' : document.getElementsByName('{{ form.po_number.name }}')[0].value,
+				'collection' : document.getElementsByName('{{ form.collection.name }}')[0].value,
+				'names_gst_and_quantities' : JSON.stringify(selected),
+				'site_key':{{site.pk}}
+			};
+			$.post(
+				"/gen_bill_post",
+				params,
+				function(data, status){
+					var res = data.split("#")
+					if (res[0] == "success"){
+						Materialize.toast("Done !", 1500);
+						document.getElementById("form").reset();
+						$('#add_product').html("");
+						var win = window.open("/view_bill/"+res[1], '_blank');
+						win.focus();
+						selected = [];
+					} else {
+						Materialize.toast(data, 1500);
+					}
+				}
+			).fail(function(){
+				alert("Send Failed !");
+			});
+		}
+
+		function customAddToForm(){
+			var name = document.getElementById('name_custom').value.trim();
+			var price = document.getElementById('price_custom').value.trim();
+			var quantity = document.getElementById('quantity_custom').value.trim();
+			var category = document.getElementById('category_custom').value.trim();
+			var hsn = document.getElementById('hsn_custom').value;
+			var unit = document.getElementById('unit_custom').value;
+            var id = document.getElementById('id_custom').value;
+
+			if (name == "" || name.length > 200){
+				Materialize.toast("Enter Valid Name", 1500);
+			} else if (price == "") {
+				Materialize.toast("Enter Valid Price", 1500);
+			} else if (quantity == "") {
+				Materialize.toast("Enter Valid Quantity", 1500);
+			} else if (category == "") {
+				Materialize.toast("Enter Valid Tax Category", 1500);
+			} else if (hsn == "" || hsn.length > 10) {
+				Materialize.toast("Enter Valid HSN Code", 1500);
+			} else {
+				var t = {};
+				t['id'] = id;
+				t['name'] = name;
+				t['price'] = price;
+				t['quantity'] = quantity;
+				t['category'] = category;
+				t['unit'] = unit;
+				t['hsn'] = hsn;
+				selected.push(t);
+				$('#add_product').append(
+					`
+					<tr>
+						<td><pre>` + t.name + `</pre></td>
+						<td>` + t.quantity + `</td>
+						<td>` + t.unit + `</td>
+						<td>` + t.price + `</td>
+						<td>` + t.hsn + `</td>
+						<td>` + t.category + `%</td>
+						<td>` + t.price*t.quantity + `</td>
+					</tr>
+					`
+				);
+				document.getElementById('name_custom').value = "";
+				document.getElementById('price_custom').value = "";
+				document.getElementById('quantity_custom').value = "";
+				document.getElementById('hsn_custom').value = "";
+				document.getElementById('unit_custom').value = "";
+				document.getElementById('category_custom').value = "";
+				$('select').material_select();
+			}
+
+		}
+
+		$(document).ready(function(){
+
+			$('select').material_select();
+
+			$('.datepicker').pickadate({
+				selectMonths: true, // Creates a dropdown to control month
+				selectYears: 15 // Creates a dropdown of 15 years to control year
+			});
+
+			setCsrf('{{ csrf_token }}');
+
+			$('textarea.autocomplete').autocomplete({
+				data: getAutocomplete(),
+				limit: 20, // The max amount of results that can be shown at once. Default: Infinity.
+				onAutocomplete: function(val, data) {
+					//TODO
+					// Callback function when value is autcompleted.
+				},
+				minLength: 1, // The minimum length of the input for the autocomplete to start. Default: 1.
+			});
+
+			{% autoescape off %}
+			var data = {{ data }}
+			{% endautoescape %}
+
+
+			$('#name_custom').change(function() {
+
+				x = $('#name_custom').val();
+
+				for(var i=0; i<data.length; i++)
+					if(x==data[i].name) break;
+
+				if(i>=0 && i<data.length){
+					$('#price_custom').focus();
+					$('#price_custom').val(data[i].price);
+					$('#price_custom').blur();
+					$('#hsn_custom').focus();
+					$('#hsn_custom').val(data[i].hsn_code);
+					$('#hsn_custom').blur();
+					$('#id_custom').focus();
+					$('#id_custom').val(data[i].id);
+					$('#id_custom').blur();
+					$('#category_custom').focus();
+					$('#category_custom').val(data[i].tax_rate);
+					$('#category_custom').blur();
+					$('#unit_custom').focus();
+					$('#unit_custom').val(data[i].unit);
+					$('#unit_custom').blur();
+					
+					//uncomment this to enable inventory constraint
+					/*$('#quantity_custom').attr({
+                        'max': data[i].inventory
+                    });*/
+				}
+				else{
+					$('#price_custom').val('');
+					$('#id_custom').val(-1);
+				}
+			});
+
+		});
+	</script>
+
+	{% include 'accounts/navigation.html' %}
+
+	<div class="container">
+
+		<div class="row">
+			<blockquote>
+				<h4>Generate Bill</h4>
+				<h5>{{site.name}}</h5>
+			</blockquote>
+		</div>
+
+		<form  id="form">
+
+			{% csrf_token %}
+
+			<div class="row">
+				<button onclick="sendData(); return false;" class="btn waves-light waves-effect right">Generate Bill</button>
+			</div>
+
+			<div class="row">
+				<div class="input-field col s12 m4 l3">
+					{{form.invoice_number.errors}}
+					<input type="number"  name="{{form.invoice_number.name}}">
+					<label for="{{form.invoice_number.id_for_label}}">Invoice Number</label>
+				</div>
+				<div class="input-field col s12 m4 l3">
+					{{ form.invoice_date.errors }}
+					<input type="date" class="datepicker" name="{{form.invoice_date.name}}">
+					<label for="{{ form.invoice_date.id_for_label }}">Invoice Date</label>
+				</div>
+
+
+					<div class="input-field col s12 m4 l3">
+					{{form.po_number.errors}}
+					<input type="number"  name="{{form.po_number.name}}">
+					<label for="{{form.po_number.id_for_label}}">PO Number</label>
+				</div>
+
+				<div class="input-field col s12 m4 l3">
+					{{ form.po_date.errors }}
+					<input type="date" class="datepicker" name="{{form.po_date.name}}">
+					<label for="{{ form.po_date.id_for_label }}">PO Date</label>
+				</div>
+				
+				<div class="input-field col s12 m4 l3">
+					{{form.collection.errors}}
+					{{form.collection}}
+					<label for="{{form.collection.id_for_label}}">Tax Collector</label>
+				</div>
+			</div>
+
+			<div class="row" id="products">
+				<table class="centered striped">
+					<thead>
+						<tr>
+							<th>Name</th>
+							<th>Quantity</th>
+							<th>Unit</th>
+							<th>Rate</th>
+							<th>HSN</th>
+							<th>Tax Category</th>
+							<th>Total</th>
+						</tr>
+					</thead>
+					<tbody id="add_product">
+					</tbody>
+				</table>
+			</div>
+
+			<div class="row">
+				<div class="input-field col s2">
+					<textarea id="name_custom" class="materialize-textarea autocomplete"></textarea>
+					<label for="name_custom">Name</label>
+				</div>
+				<div class="input-field col s2">
+					<input type="number" id="quantity_custom"></input>
+					<label for="quantity_custom">Quantity</label>
+				</div>
+				<div class="input-field col s2">
+					<input type="text" id="unit_custom">
+					<label for="unit_custom">UNIT</label>
+				</div>
+				<div class="input-field col s2">
+					<input type="number" id="price_custom"></input>
+					<label for="price_custom">Price</label>
+				</div>
+				<div class="input-field col s2">
+					<input type="text" id="hsn_custom">
+					<label for="hsn_custom">HSN Code</label>
+				</div>
+				<div class="input-field col s2">
+					<input type="number" id="category_custom">
+					<label for="category_custom">TAX Rate</label>
+				</div>
+				<div class="col s2">
+					<input type="number" id="id_custom" value="-1" hidden="true"></input>
+					<button onclick="customAddToForm(); return false;" class="btn waves-light waves effect">Add</button>
+				</div>
+			</div>
+		</form>
+
+	</div>
+
+</body>
+
+{% endblock %}

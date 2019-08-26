@@ -1,0 +1,31 @@
+{% extends 'accounts/base.html' %}
+
+{% block content %}
+<body>
+{% if nav %}
+{% include 'accounts/navigation.html' %}
+{% endif %}
+<div class="container">
+    <form method="POST" action="/add_product" class="row">
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="input-field col s12 m6">
+                {{ field.errors }}
+                {{ field }}
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            </div>
+        {% endfor %}
+        <div class="col s12">
+            <center>
+                <button type="submit" class="modal-action btn waves-effect waves-light">Add</button>  
+            </center>
+        </div>
+    </form>
+</div>
+<script>
+    $(document).ready(function() {
+        $('select').material_select();
+    });
+</script>
+</body>
+{% endblock %}

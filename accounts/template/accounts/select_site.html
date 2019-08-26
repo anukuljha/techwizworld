@@ -1,0 +1,61 @@
+{% extends 'accounts/base.html' %}
+
+{% block content %}
+
+
+
+
+
+<body>
+
+    <script type="text/javascript">
+
+                $(document).ready(function(){
+
+            $('select').material_select();
+
+            $('.datepicker').pickadate({
+                selectMonths: true, // Creates a dropdown to control month
+                selectYears: 15 // Creates a dropdown of 15 years to control year
+            });
+
+            setCsrf('{{ csrf_token }}');
+
+        
+            });
+    </script>
+		{% include 'accounts/navigation.html' %}
+	<div class="container">
+
+
+				<form method="GET" action="/gen_bill/" class="row">
+        {% csrf_token %}
+
+
+<div class="card-content">
+				<span class="card-title">Select Site</span>
+					</div>
+                    
+            <div class="row">
+			<div class="input-field col s2">
+		<select id ="billing_site" name='selected_site'>
+        <option value="" disabled selected>Billing Site</option>
+        
+{% for site in sites %}
+<option value="{{ site.pk }}">{{ site }}</option>
+{% endfor %}
+</select>
+</div>
+</div>
+        <div class="col s12">
+            <center>
+                <button type="submit" class="modal-action btn waves-effect waves-light">GO
+                    <button>  
+            </center>
+        </div>
+    </form>
+	</div>
+
+</body>
+
+{% endblock %}

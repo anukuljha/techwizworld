@@ -1,0 +1,36 @@
+{% extends 'accounts/base.html' %}
+
+{% block content %}
+
+<body>
+
+	<script type="text/javascript">
+		{% if success %}
+			$(document).ready(function(){
+				self.close()
+			});
+		{% endif %}
+		window.onunload = refreshParent;
+		function refreshParent() {
+			window.opener.location.reload();
+		}
+	</script>
+	
+	<div class="container">
+		<div class="row">
+			<form method="POST" action="">
+				{% csrf_token %}
+				{% for field in form %}
+				<div class="input-field col s12 m6">
+					{{ field }}
+					<label for="{{ field.id_for_label }}">{{ field.label }}</label>
+				</div>
+				{% endfor %}
+				<button type="submit" class="btn waves-effect waves-light">Update</button>
+			</form>	
+		</div>
+	</div>
+
+</body>
+
+{% endblock %}

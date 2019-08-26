@@ -1,0 +1,45 @@
+{% extends 'accounts/base.html' %}
+
+{% block content %}
+
+<body>
+	{% include 'accounts/navigation.html' %}
+
+	<div class="container">
+		<div class="row">
+			<blockquote>
+				<h4>All Bills</h4>
+			</blockquote>
+		</div>
+
+		<div class="row">
+			<table class="striped centered">
+				<thead>
+					<tr>
+						<th>S.No.</th>
+						<th>Invoice Date</th>
+						<th>To</th>
+						<th>Action</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for bill in bills %}
+					<tr>
+						<td>{{ forloop.counter }}</td>
+						<td>{{ bill.invoice_date }}</td>
+						<td>{{ bill.site }}</td>
+						<td>
+							<a href="/view_bill/{{ bill.pk }}" target="_blank" class="btn waves-effect waves-light">
+								Open
+							</a>
+						</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+</body>
+
+{% endblock %}

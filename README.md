@@ -1,2 +1,2 @@
-# techwizworld
-Billing tool for techwizworld
+# MOON-CG
+Django Billing Software
